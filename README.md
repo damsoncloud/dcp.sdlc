@@ -1,7 +1,14 @@
 # Damson Cloud Platform SDLC stuff
 
 This repository contains all the stuff related to DCP's SDLC setup, including common
-components used during CI/CD on GitHub Actions, common setup pieces for devenv, etc.
+components used during CI/CD on GitHub Actions, common setup pieces for devenv,
+etc.
+
+## Contents
+
+See each component's `README.md` file for more details.
+
+* `./devenvbase` - reusable base for devenv configurations.
 
 ## Contributing
 
