@@ -17,6 +17,6 @@ inputs:
     flake: false
 ...
 imports:
-  - ./devenvbase
+  - devenvbase
 ...
 ```
