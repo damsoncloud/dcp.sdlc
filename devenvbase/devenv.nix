@@ -7,7 +7,10 @@
 }:
 
 {
-  packages = [ pkgs.starship ];
+  packages = [
+    pkgs.pre-commit
+    pkgs.starship
+  ];
 
   enterShell = ''
     eval "$(starship init bash)"
