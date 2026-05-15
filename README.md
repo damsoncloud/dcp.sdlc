@@ -1,8 +1,7 @@
-# Template Project
+# Damson Cloud Platform SDLC stuff
 
-This repository is meant to be used as a template for any new Damson Cloud repositories.
-Please replace the 1st level header with the name of your project. Please also replace
-contents of this file with information specific to your project.
+This repository contains all the stuff related to DCP's SDLC setup, including common
+components used during CI/CD on GitHub Actions, common setup pieces for devenv, etc.
 
 ## Contributing
 
