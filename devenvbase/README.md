@@ -13,7 +13,7 @@ project's `devenv.yaml` file:
 ...
 inputs:
   devenvbase:
-    url: github:damsoncloud/dcp.sdlc&dir=devenvbase
+    url: github:damsoncloud/dcp.sdlc?dir=devenvbase
     inputs:
       git-hooks:
         follows: git-hooks
