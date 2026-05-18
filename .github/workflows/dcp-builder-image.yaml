@@ -3,6 +3,7 @@ name: Builder for the custom runner image including pre-installed tools like dev
 on:
   schedule:
     - cron: '15 1 * * 1'
+  workflow_dispatch:
 
 jobs:
   build-dcp-builder-image:
