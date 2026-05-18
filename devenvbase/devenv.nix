@@ -18,10 +18,12 @@
 
   git-hooks.hooks = {
     check-json.enable = true;
+    check-shebang-scripts-are-executable.enable = true;
+    end-of-file-fixer.enable = true;
     hadolint.enable = true;
-    no-commit-to-branch.enable = true;
     nixfmt.enable = true;
     markdownlint.enable = true;
+    mixed-line-endings.enable = true;
     keep-sorted.enable = true;
     pretty-format-json.enable = true;
     ruff.enable = true;
