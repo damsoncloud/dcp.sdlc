@@ -20,7 +20,10 @@
     actionlint.enable = true;
     check-json.enable = true;
     check-shebang-scripts-are-executable.enable = true;
-    end-of-file-fixer.enable = true;
+    end-of-file-fixer = {
+      enable = true;
+      excludes = [ "devenv.lock" ];
+    };
     hadolint.enable = true;
     nixfmt.enable = true;
     markdownlint.enable = true;
