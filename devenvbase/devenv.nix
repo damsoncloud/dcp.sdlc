@@ -6,12 +6,9 @@
 {
   packages = [
     pkgs.pre-commit
-    pkgs.starship
   ];
 
-  enterShell = ''
-    eval "$(starship init bash)"
-  '';
+  starship.enable = true;
 
   git-hooks.hooks = {
     actionlint.enable = true;
