@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   ...
 }:
 
@@ -8,7 +9,7 @@
     pkgs.pre-commit
   ];
 
-  starship.enable = true;
+  starship.enable = lib.mkIf (builtins.getEnv "CI" != "true") true;
 
   git-hooks.hooks = {
     actionlint.enable = true;
