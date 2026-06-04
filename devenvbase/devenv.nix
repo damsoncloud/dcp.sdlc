@@ -5,6 +5,12 @@
 }:
 
 {
+  cachix.pull = [
+    "devenv"
+    "cachix"
+    "nixpkgs-terraform"
+  ];
+
   packages = [
     pkgs.pre-commit
   ];
@@ -37,6 +43,18 @@
     yamllint = {
       enable = true;
       excludes = [ "\.github/workflows/.*" ];
+    };
+  };
+
+  scripts = {
+    gcloud_setup = {
+      description = "Set up gcloud CLI";
+      packages = [ pkgs.google-cloud-sdk ];
+      exec = ''
+        gcloud auth login $USER_EMAIL --no-launch-browser
+        gcloud auth configure-docker europe-west2-docker.pkg.dev
+        gcloud auth application-default login --no-launch-browser
+      '';
     };
   };
 }
