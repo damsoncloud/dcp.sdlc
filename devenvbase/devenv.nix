@@ -52,7 +52,7 @@
       packages = [ pkgs.google-cloud-sdk ];
       exec = ''
         gcloud auth login $USER_EMAIL --no-launch-browser
-        gcloud auth configure-docker europe-west2-docker.pkg.dev
+        gcloud auth configure-docker europe-west4-docker.pkg.dev
         gcloud auth application-default login --no-launch-browser
       '';
     };
