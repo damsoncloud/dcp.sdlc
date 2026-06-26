@@ -31,9 +31,9 @@
       enable = true;
       settings.configuration = {
         MD013 = {
-          line_length = 120;
-          heading_line_length = 120;
-          code_block_line_length = 120;
+          line_length = 180;
+          heading_line_length = 180;
+          code_block_line_length = 180;
         };
       };
     };
