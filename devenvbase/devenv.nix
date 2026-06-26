@@ -6,8 +6,9 @@
 
 {
   cachix.pull = [
-    "devenv"
     "cachix"
+    "devenv"
+    "nixpkgs-python"
     "nixpkgs-terraform"
   ];
 
