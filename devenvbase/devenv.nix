@@ -28,7 +28,16 @@
     };
     hadolint.enable = true;
     nixfmt.enable = true;
-    markdownlint.enable = true;
+    markdownlint = {
+      enable = true;
+      settings.configuration = {
+        MD013 = {
+          line_length = 180;
+          heading_line_length = 180;
+          code_block_line_length = 180;
+        };
+      };
+    };
     mixed-line-endings.enable = true;
     no-commit-to-branch = {
       enable = true;
