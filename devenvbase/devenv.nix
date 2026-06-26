@@ -27,7 +27,7 @@
     };
     hadolint.enable = true;
     nixfmt.enable = true;
-    markdownlint = {                        
+    markdownlint = {
       enable = true;
       settings.configuration = {
         MD013 = {
