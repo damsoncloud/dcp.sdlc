@@ -1,0 +1,103 @@
+name: Initialise devenv.sh environment
+description: >
+  This action performs the following steps:
+    - deletes directory with huge but unnecessary cached files
+    - checkouts the repository
+    - installs Nix
+    - caches Nix store if enabled via `cache_nix_store` flag with `'true'` value (defaults to `'false'`)
+    - caches Podman objects if enabled via `cache_podman` flag with `'true'` value (defaults to `'false'`)
+    - configures most common cachix public binary caches (python, terraform, devenv)
+    - installs devenv.sh
+    - executes `devenv test` command if `skip_devenv_test` is set to `'false'` (defaults to `'false'`)
+    - authenticates to Google Cloud Platform (for example for Terraform).
+      GCP access token scopes can be provided in a string variable `gcp_access_token_scopes` (defaults to `'https://www.googleapis.com/auth/cloud-platform'`).
+
+inputs:
+  gcp_workload_identity_provider:
+    description: Google Cloud Platform Workload Identity provider
+    required: true
+  gcp_service_account:
+    description: Google Cloud Platform service account email
+    required: true
+  github_access_token:
+    description: Access token allowing to fetch devenvbase configuration
+    required: true
+  cache_nix_store:
+    description: Execute step which caches nix-store
+    required: false
+    default: 'false'
+  cache_podman:
+    description: Execute step which caches podman objects
+    required: false
+    default: 'false'
+  checkout_fetch_depth:
+    description: Fetch depth for git checkout (0 means all history)
+    required: false
+    default: 1
+  gcp_access_token_scopes:
+    description: Scopes to use for Google Cloud Platform access token
+    required: false
+    default: 'https://www.googleapis.com/auth/cloud-platform'
+  skip_devenv_test:
+    description: If 'true',  the action will skip `devenv test` command
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Delete huge unnecessary tools folder to save some space for real work :)
+      shell: bash
+      run: rm -rf /opt/hostedtoolcache
+
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: ${{ inputs.checkout_fetch_depth }}
+
+    - name: Install Nix
+      uses: nixbuild/nix-quick-install-action@v35
+      with:
+        github_access_token: ${{ inputs.github_access_token }}
+
+    - if: ${{ inputs.cache_nix_store == 'true' }}
+      name: Cache nix-store
+      uses: nix-community/cache-nix-action@v7
+      with:
+        primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/devenv.lock') }}
+        restore-prefixes-first-match: nix-${{ runner.os }}-
+        gc-max-store-size-linux: 3G
+
+    - if: ${{ inputs.cache_podman == 'true' }}
+      name: Tar as root for podman caching (setuid bit)
+      run: sudo chmod u+s /usr/bin/tar
+      shell: bash
+    - if: ${{ inputs.cache_podman == 'true' }}
+      name: Cache podman images
+      uses: actions/cache@v6
+      with:
+        path: /tmp/containers
+        key: podman-${{ runner.os }}-${{ hashFiles('./kroki-version.json') }}
+
+    - name: Initialise Cachix caches
+      uses: cachix/cachix-action@v17
+      with:
+        name: devenv
+        extraPullNames: cachix, nixpkgs-python, nixpkgs-terraform
+        skipPush: true
+
+    - name: Install devenv.sh
+      run: nix profile add nixpkgs#devenv
+      shell: bash
+
+    - name: Authenticate to Google Cloud Platform
+      id: gcp-auth
+      uses: google-github-actions/auth@v3
+      with:
+        workload_identity_provider: ${{ inputs.gcp_workload_identity_provider }}
+        service_account: ${{ inputs.gcp_service_account }}
+        access_token_scopes: ${{ inputs.gcp_access_token_scopes }}
+
+    - if: ${{ inputs.skip_devenv_test != 'true' }}
+      name: Build the devenv shell, execute unit tests, run any pre-commit hooks
+      run: devenv test
+      shell: bash

@@ -52,7 +52,10 @@
     trufflehog.enable = true;
     yamllint = {
       enable = true;
-      excludes = [ "\.github/workflows/.*" ];
+      excludes = [
+        "\.github/workflows/.*"
+        "\.github/actions/.*"
+      ];
     };
   };
 
