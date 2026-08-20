@@ -12,18 +12,18 @@ on:
       - 'devenvbase/**'
       - '.github/workflows/devenvbase-ci.yaml'
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   devenvbase-ci:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: cachix/install-nix-action@v31
-      - uses: cachix/cachix-action@v17
+      - uses: actions/checkout@v7 # This is only needed if using `initialise_devenv` composite action from the same repository
+      - uses: ./.github/actions/initialise_devenv
         with:
-          name: devenv
-      - name: Install devenv.sh
-        run: nix profile add nixpkgs#devenv
-
-      - name: Build the devenv shell and run any pre-commit hooks
-        run: devenv test
+          gcp_workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_service_account: ${{ vars.GCP_TERRAFORM_COMMON_SA }}
+          github_access_token: ${{ secrets.DEVENV_GITHUB_TOKEN }}
