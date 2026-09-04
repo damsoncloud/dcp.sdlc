@@ -16,6 +16,8 @@
     pkgs.pre-commit
   ];
 
+  env.TF_VAR_dcp_sandbox_project_id = "dc-dev-dcp-sandbox01-m7ly";
+
   starship.enable = lib.mkIf (builtins.getEnv "CI" != "true") true;
 
   git-hooks.hooks = {
