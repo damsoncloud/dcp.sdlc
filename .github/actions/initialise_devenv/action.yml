@@ -101,6 +101,12 @@ runs:
         service_account: ${{ inputs.gcp_service_account }}
         access_token_scopes: ${{ inputs.gcp_access_token_scopes }}
 
+    - name: Fix AppArmor profile for podman
+      run: |
+        sudo sed -Ei 's!^profile podman /usr/bin/podman !profile podman /nix/store/*-podman-*/bin/podman !' /etc/apparmor.d/podman
+        sudo systemctl reload apparmor.service
+      shell: bash
+
     - if: ${{ inputs.skip_devenv_test != 'true' }}
       name: Build the devenv shell, execute unit tests, run any pre-commit hooks
       run: devenv test
