@@ -7,21 +7,12 @@ description: >
     - caches Nix store if enabled via `cache_nix_store` flag with `'true'` value (defaults to `'false'`)
     - caches Podman objects if enabled via `cache_podman` flag with `'true'` value (defaults to `'false'`)
     - configures most common cachix public binary caches (python, terraform, devenv)
-    - installs devenv.sh
+    - installs devenv.sh (version pinned to `devenv_version` input value)
     - executes `devenv test` command if `skip_devenv_test` is set to `'false'` (defaults to `'false'`)
     - authenticates to Google Cloud Platform (for example for Terraform).
       GCP access token scopes can be provided in a string variable `gcp_access_token_scopes` (defaults to `'https://www.googleapis.com/auth/cloud-platform'`).
 
 inputs:
-  gcp_workload_identity_provider:
-    description: Google Cloud Platform Workload Identity provider
-    required: true
-  gcp_service_account:
-    description: Google Cloud Platform service account email
-    required: true
-  github_access_token:
-    description: Access token allowing to fetch devenvbase configuration
-    required: true
   cache_nix_store:
     description: Execute step which caches nix-store
     required: false
@@ -34,10 +25,23 @@ inputs:
     description: Fetch depth for git checkout (0 means all history)
     required: false
     default: 1
+  devenv_version:
+    description: devenv.sh release tag to install
+    required: false
+    default: 'v2.2.2'
   gcp_access_token_scopes:
     description: Scopes to use for Google Cloud Platform access token
     required: false
     default: 'https://www.googleapis.com/auth/cloud-platform'
+  gcp_service_account:
+    description: Google Cloud Platform service account email
+    required: true
+  gcp_workload_identity_provider:
+    description: Google Cloud Platform Workload Identity provider
+    required: true
+  github_access_token:
+    description: Access token allowing to fetch devenvbase configuration
+    required: true
   skip_devenv_test:
     description: If 'true',  the action will skip `devenv test` command
     required: false
@@ -86,7 +90,7 @@ runs:
         skipPush: true
 
     - name: Install devenv.sh
-      run: nix profile add nixpkgs#devenv
+      run: nix profile add --accept-flake-config github:cachix/devenv/${{ inputs.devenv_version }}
       shell: bash
 
     - name: Authenticate to Google Cloud Platform
