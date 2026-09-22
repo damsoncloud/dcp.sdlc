@@ -39,6 +39,7 @@
       };
     };
     mixed-line-endings.enable = true;
+    mypy.enable = true;
     no-commit-to-branch = {
       enable = true;
       stages = [ "commit-msg" ];
