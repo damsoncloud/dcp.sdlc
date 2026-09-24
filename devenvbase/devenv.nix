@@ -42,7 +42,6 @@
     mixed-line-endings.enable = true;
     mypy = {
       enable = true;
-      settings.binPath = lib.mkIf config.languages.python.uv.enable "${config.env.UV_PROJECT_ENVIRONMENT}/bin/mypy";
       args = lib.mkIf config.languages.python.uv.enable [
         "--python-executable"
         "${config.env.UV_PROJECT_ENVIRONMENT}/bin/python"
