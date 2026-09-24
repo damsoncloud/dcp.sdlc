@@ -1,0 +1,36 @@
+line-length = 120
+indent-width = 4
+
+[lint]
+extend-select = [
+    # keep-sorted start
+    "A",
+    "B",
+    "COM",
+    "D",
+    "E",
+    "EXE",
+    "F",
+    "FAST",
+    "I",
+    "LOG",
+    "N",
+    "PL",
+    "PT",
+    "PTH",
+    "Q",
+    "RET",
+    "S",
+    "SIM",
+    "T20",
+    "U",
+    "W",
+    # keep-sorted end
+]
+pydocstyle.convention = "google"
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

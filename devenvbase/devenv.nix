@@ -60,6 +60,8 @@
     };
   };
 
+  files.".ruff.toml".source = ./.ruff.toml;
+
   scripts = {
     gcloud_setup = {
       description = "Set up gcloud CLI";
