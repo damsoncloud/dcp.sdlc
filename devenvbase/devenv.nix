@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -39,7 +40,13 @@
       };
     };
     mixed-line-endings.enable = true;
-    mypy.enable = true;
+    mypy = {
+      enable = true;
+      args = lib.optionals config.languages.python.uv.enable [
+        "--python-executable"
+        "${config.env.UV_PROJECT_ENVIRONMENT}/bin/python"
+      ];
+    };
     no-commit-to-branch = {
       enable = true;
       stages = [ "commit-msg" ];
