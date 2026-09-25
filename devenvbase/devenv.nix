@@ -42,6 +42,7 @@
     mixed-line-endings.enable = true;
     mypy = {
       enable = true;
+      require_serial = true;
       args = lib.mkIf config.languages.python.uv.enable [
         "--python-executable"
         "${config.env.UV_PROJECT_ENVIRONMENT}/bin/python"
