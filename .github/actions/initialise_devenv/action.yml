@@ -28,7 +28,7 @@ inputs:
   devenv_version:
     description: devenv.sh release tag to install
     required: false
-    default: 'v2.2.2'
+    default: 'v2.4.0'
   gcp_access_token_scopes:
     description: Scopes to use for Google Cloud Platform access token
     required: false
