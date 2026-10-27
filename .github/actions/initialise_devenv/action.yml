@@ -9,7 +9,7 @@ description: >
     - configures most common cachix public binary caches (python, terraform, devenv)
     - installs devenv.sh (version pinned to `devenv_version` input value)
     - executes `devenv test` command if `skip_devenv_test` is set to `'false'` (defaults to `'false'`)
-    - authenticates to Google Cloud Platform (for example for Terraform).
+    - authenticates to Google Cloud Platform (for example for Terraform) if `gcp_workload_identity_provider` is set.
       GCP access token scopes can be provided in a string variable `gcp_access_token_scopes` (defaults to `'https://www.googleapis.com/auth/cloud-platform'`).
 
 inputs:
@@ -35,10 +35,12 @@ inputs:
     default: 'https://www.googleapis.com/auth/cloud-platform'
   gcp_service_account:
     description: Google Cloud Platform service account email
-    required: true
+    required: false
+    default: ''
   gcp_workload_identity_provider:
     description: Google Cloud Platform Workload Identity provider
-    required: true
+    required: false
+    default: ''
   github_access_token:
     description: Access token allowing to fetch devenvbase configuration
     required: true
@@ -93,7 +95,8 @@ runs:
       run: nix profile add --accept-flake-config github:cachix/devenv/${{ inputs.devenv_version }}
       shell: bash
 
-    - name: Authenticate to Google Cloud Platform
+    - if: ${{ inputs.gcp_workload_identity_provider != '' }}
+      name: Authenticate to Google Cloud Platform
       id: gcp-auth
       uses: google-github-actions/auth@v3
       with:

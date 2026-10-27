@@ -16,7 +16,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   devenvbase-ci:
@@ -26,6 +25,4 @@ jobs:
       - uses: actions/checkout@v7 # This is only needed if using `initialise_devenv` composite action from the same repository
       - uses: ./.github/actions/initialise_devenv
         with:
-          gcp_workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          gcp_service_account: ${{ vars.GCP_TERRAFORM_COMMON_SA }}
-          github_access_token: ${{ secrets.DEVENV_GITHUB_TOKEN }}
+          github_access_token: ${{ github.token }}
