@@ -70,6 +70,10 @@
 
   files.".ruff.toml".source = ./.ruff.toml;
 
+  tasks."devenv:git-hooks:run".after = lib.mkIf config.languages.python.uv.sync.enable [
+    "devenv:python:uv"
+  ];
+
   scripts = {
     gcloud_setup = lib.mkIf (builtins.getEnv "CI" != "true") {
       description = "Set up gcloud CLI";
