@@ -71,7 +71,7 @@
   files.".ruff.toml".source = ./.ruff.toml;
 
   scripts = {
-    gcloud_setup = {
+    gcloud_setup = lib.mkIf (builtins.getEnv "CI" != "true") {
       description = "Set up gcloud CLI";
       packages = [ pkgs.google-cloud-sdk ];
       exec = ''
