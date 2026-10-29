@@ -1,12 +1,22 @@
+let
+  actionReference = "damsoncloud/dcp\\.sdlc/\\.github/actions/[^@[:space:]]+@";
+in
 {
-  scripts.release_prepare = {
-    description = "Pin this repository's own workflow and action references from @main to a release tag: <tag>";
+  scripts.release_tag = {
+    description = "Tag HEAD with the latest release bumped by <major|minor|patch>, move the floating major tag to it and print the release tag";
     exec = ''
       set -euo pipefail
-      : "''${1:?Usage: release_prepare <tag>}"
       cd "$DEVENV_ROOT"
-      mapfile -t files < <(git ls-files '.github/workflows/*.yaml' '.github/actions/*/action.yml')
-      sed -i -E 's#(damsoncloud/dcp\.sdlc/\.github/[^@[:space:]]+)@main#\1@'"$1"'#g' "''${files[@]}"
+      version=$(version_bump "''${1:-}")
+      major="v''${version%%.*}"
+      # Reusable workflows reference this repository's actions by the floating major tag, which must match the release
+      if git grep -qE '${actionReference}' -- .github/workflows && git grep -E '${actionReference}' -- .github/workflows | grep -vqE "@$major\b"; then
+        echo "Workflows must reference this repository's actions with @$major before releasing v$version" >&2
+        exit 1
+      fi
+      git tag --annotate "v$version" --message "Release v$version" >&2
+      git tag --force --annotate "$major" --message "Latest $major release: v$version" >&2
+      echo "v$version"
     '';
   };
 }

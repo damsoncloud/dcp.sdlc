@@ -22,7 +22,7 @@ jobs:
       PUBLISHED_IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.tag }}
 
     steps:
-      - uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@main
+      - uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v1
         with:
           github_access_token: ${{ github.token }}
           skip_devenv_test: 'true'
