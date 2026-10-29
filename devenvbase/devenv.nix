@@ -27,7 +27,11 @@
       enable = true;
       excludes = [ "devenv.lock" ];
     };
-    hadolint.enable = true;
+    hadolint = {
+      enable = true;
+      # Priority between git-hooks' default (1000) and plain definitions (100), so projects can still override it
+      files = lib.mkOverride 900 "(^|/)([^/]*\\.)?(Docker|Container)file(\\.[^/]*)?$";
+    };
     nixfmt.enable = true;
     markdownlint = {
       enable = true;
@@ -47,6 +51,10 @@
         "--python-executable"
         "${config.env.UV_PROJECT_ENVIRONMENT}/bin/python"
       ];
+      # mypy from the project's venv sees the project's plugins and stubs, e.g. pydantic.mypy
+      settings.binPath = lib.mkIf config.languages.python.uv.enable (
+        lib.mkDefault "${config.env.UV_PROJECT_ENVIRONMENT}/bin/mypy"
+      );
     };
     no-commit-to-branch = {
       enable = true;

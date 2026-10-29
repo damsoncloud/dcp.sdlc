@@ -5,7 +5,8 @@ description: >
     - checkouts the repository
     - installs Nix
     - caches Nix store if enabled via `cache_nix_store` flag with `'true'` value (defaults to `'false'`)
-    - caches Podman objects if enabled via `cache_podman` flag with `'true'` value (defaults to `'false'`)
+    - caches Podman objects if enabled via `cache_podman` flag with `'true'` value (defaults to `'false'`),
+      keyed by the content of files matching the `cache_podman_key_files` glob pattern (required when caching Podman objects)
     - configures most common cachix public binary caches (python, terraform, devenv)
     - installs devenv.sh (version pinned to `devenv_version` input value)
     - executes `devenv test` command if `skip_devenv_test` is set to `'false'` (defaults to `'false'`)
@@ -21,6 +22,10 @@ inputs:
     description: Execute step which caches podman objects
     required: false
     default: 'false'
+  cache_podman_key_files:
+    description: Glob pattern of files defining the cached podman objects (e.g. pinned image versions); a change invalidates the cache
+    required: false
+    default: ''
   checkout_fetch_depth:
     description: Fetch depth for git checkout (0 means all history)
     required: false
@@ -73,6 +78,12 @@ runs:
         restore-prefixes-first-match: nix-${{ runner.os }}-
         gc-max-store-size-linux: 3G
 
+    - if: ${{ inputs.cache_podman == 'true' && inputs.cache_podman_key_files == '' }}
+      name: Validate podman caching inputs
+      run: |
+        echo "::error::cache_podman_key_files is required when cache_podman is enabled"
+        exit 1
+      shell: bash
     - if: ${{ inputs.cache_podman == 'true' }}
       name: Tar as root for podman caching (setuid bit)
       run: sudo chmod u+s /usr/bin/tar
@@ -82,7 +93,7 @@ runs:
       uses: actions/cache@v6
       with:
         path: /tmp/containers
-        key: podman-${{ runner.os }}-${{ hashFiles('./kroki-version.json') }}
+        key: podman-${{ runner.os }}-${{ hashFiles(inputs.cache_podman_key_files) }}
 
     - name: Initialise Cachix caches
       uses: cachix/cachix-action@v17
