@@ -47,6 +47,8 @@ jobs:
           release_prepare "$tag"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The release commit lives only under the tag, never on a branch
+          git switch --detach
           git commit --all --message "Release $tag"
           git tag --annotate "$tag" --message "Release $tag"
           git push origin "refs/tags/$tag"
