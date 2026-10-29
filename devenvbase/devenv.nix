@@ -5,6 +5,9 @@
   ...
 }:
 
+let
+  isCI = builtins.getEnv "CI" == "true";
+in
 {
   imports = [
     ./modules/container-image.nix
@@ -20,9 +23,10 @@
 
   packages = [
     pkgs.pre-commit
-  ];
+  ]
+  ++ lib.optional (!isCI) pkgs.google-cloud-sdk;
 
-  starship.enable = lib.mkIf (builtins.getEnv "CI" != "true") true;
+  starship.enable = lib.mkIf (!isCI) true;
 
   git-hooks.hooks = {
     actionlint.enable = true;
@@ -88,9 +92,8 @@
   ];
 
   scripts = {
-    gcloud_setup = lib.mkIf (builtins.getEnv "CI" != "true") {
+    gcloud_setup = lib.mkIf (!isCI) {
       description = "Set up gcloud CLI";
-      packages = [ pkgs.google-cloud-sdk ];
       exec = ''
         gcloud auth login $USER_EMAIL --no-launch-browser
         gcloud auth configure-docker europe-west4-docker.pkg.dev

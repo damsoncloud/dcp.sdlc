@@ -1,0 +1,41 @@
+name: Container image scan
+
+# Scans a published container image of a repository for vulnerabilities and uploads the results to GitHub code scanning.
+# Callers must grant `contents: read` and `security-events: write`.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag of the published image to scan
+        type: string
+        default: latest
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    env:
+      PUBLISHED_IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.tag }}
+
+    steps:
+      - uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@main
+        with:
+          github_access_token: ${{ github.token }}
+          skip_devenv_test: 'true'
+
+      - name: Scan the published container image for vulnerabilities
+        shell: devenv shell bash -- -e {0}
+        run: |
+          podman pull "$PUBLISHED_IMAGE"
+          IMAGE="$PUBLISHED_IMAGE" image_scan trivy.sarif
+
+      - if: ${{ !cancelled() && hashFiles('trivy.sarif') != '' }}
+        name: Upload the vulnerability scan results to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy.sarif
+          category: image-published
