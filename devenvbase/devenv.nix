@@ -6,6 +6,11 @@
 }:
 
 {
+  imports = [
+    ./modules/container-image.nix
+    ./modules/python.nix
+  ];
+
   cachix.pull = [
     "cachix"
     "devenv"
