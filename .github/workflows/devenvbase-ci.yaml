@@ -4,14 +4,16 @@ on:
   pull_request:
     paths:
       - 'devenvbase/**'
-      - '.github/workflows/devenvbase-ci.yaml'
+      - 'devenv.nix'
+      - '.github/workflows/**'
       - '.github/actions/initialise_devenv/*'
   push:
     branches:
       - main
     paths:
       - 'devenvbase/**'
-      - '.github/workflows/devenvbase-ci.yaml'
+      - 'devenv.nix'
+      - '.github/workflows/**'
       - '.github/actions/initialise_devenv/*'
 
 permissions:

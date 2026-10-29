@@ -12,6 +12,8 @@ in
   imports = [
     ./modules/container-image.nix
     ./modules/python.nix
+    ./modules/sdlc.nix
+    ./modules/versioning.nix
   ];
 
   cachix.pull = [

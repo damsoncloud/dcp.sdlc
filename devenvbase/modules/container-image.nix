@@ -47,12 +47,8 @@ in
 
     versionCommand = mkOption {
       type = types.str;
-      default =
-        if python.uv.enable then
-          "uv version --short"
-        else
-          "{ git -C \"$DEVENV_ROOT\" describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.0.0; } | sed 's/^v//'";
-      defaultText = literalExpression ''"uv version --short" with uv, otherwise the latest `v*` tag'';
+      default = if python.uv.enable then "uv version --short" else "version_latest";
+      defaultText = literalExpression ''"uv version --short" with uv, otherwise "version_latest"'';
       description = "Command printing the project version; the `VERSION` environment variable takes precedence.";
     };
 
@@ -94,23 +90,6 @@ in
     ];
 
     scripts = {
-      version_bump = {
-        description = "Set the project version to the latest release tag bumped by <major|minor|patch> and print it";
-        exec = ''
-          set -euo pipefail
-          latest=$(git -C "$DEVENV_ROOT" describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.0.0)
-          IFS=. read -r major minor patch <<<"''${latest#v}"
-          case "''${1:-}" in
-            major) next="$((major + 1)).0.0" ;;
-            minor) next="$major.$((minor + 1)).0" ;;
-            patch) next="$major.$minor.$((patch + 1))" ;;
-            *) echo "Usage: version_bump <major|minor|patch>" >&2; exit 1 ;;
-          esac
-          ${lib.optionalString python.uv.enable ''uv version "$next" --no-sync >/dev/null''}
-          echo "$next"
-        '';
-      };
-
       image_build = {
         description = "Build the container image";
         exec = ''
