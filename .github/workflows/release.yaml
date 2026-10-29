@@ -1,7 +1,7 @@
 name: Release
 
-# Tags a release of this repository. The tagged commit is created off the default branch: it pins this repository's own
-# workflow and action references from @main to the release tag, so a released version only ever uses itself.
+# Tags the default branch's HEAD as a release vX.Y.Z and moves the floating major tag vX to it. Reusable workflows reference this
+# repository's actions by the floating major tag, as GITHUB_TOKEN cannot push commits changing workflow files.
 
 on:
   workflow_dispatch:
@@ -38,20 +38,16 @@ jobs:
           checkout_fetch_depth: 0
           github_access_token: ${{ github.token }}
 
-      - name: Create and push the release tag
+      - name: Create and push the release tags
         shell: devenv shell bash -- -e {0}
         env:
           BUMP: ${{ inputs.bump }}
         run: |
-          tag="v$(version_bump "$BUMP")"
-          release_prepare "$tag"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # The release commit lives only under the tag, never on a branch
-          git switch --detach
-          git commit --all --message "Release $tag"
-          git tag --annotate "$tag" --message "Release $tag"
+          tag=$(release_tag "$BUMP")
           git push origin "refs/tags/$tag"
+          git push --force origin "refs/tags/${tag%%.*}"
           echo "TAG=$tag" >> "$GITHUB_ENV"
 
       - name: Create the GitHub release
