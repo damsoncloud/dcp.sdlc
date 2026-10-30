@@ -19,13 +19,13 @@ called by the reusable workflows come from devenvbase, so both must always move 
 # devenv.yaml
 inputs:
   devenvbase:
-    url: github:damsoncloud/dcp.sdlc/v1.0.0?dir=devenvbase
+    url: github:damsoncloud/dcp.sdlc/v1.1.0?dir=devenvbase
     flake: false
 ```
 
 ```yaml
 # .github/workflows/*.yaml
-- uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v1.0.0
+- uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v1.1.0
 ```
 
 New repositories get this set-up from the private [TEMPLATE](https://github.com/damsoncloud/TEMPLATE) repository.
@@ -38,11 +38,13 @@ because checks of reusable workflows are reported under the calling job's name.
 
 ### Upgrades
 
-Do not upgrade the references by hand or with Dependabot, which can only update the GitHub Actions references. Instead:
+Do not upgrade the references by hand or with Dependabot, which can only update the GitHub Actions references. Instead, run `dcp_sdlc_upgrade_pr [version]` in
+the repository's devenv shell: it creates a branch, upgrades to the release, the latest by default, updates all devenv inputs, runs `devenv test` and opens a pull
+request. `dcp_sdlc_upgrade [version]` only updates the references and the devenvbase lock.
 
-* the scheduled [`dcp-sdlc-upgrade.yaml`](.github/workflows/dcp-sdlc-upgrade.yaml) workflow upgrades to the latest release, updates all devenv inputs, validates the
-  result and opens a pull request, or
-* run `dcp_sdlc_upgrade [version]` in the repository's devenv shell, which updates all references and the devenvbase lock.
+The scheduled [`dcp-sdlc-check.yaml`](.github/workflows/dcp-sdlc-check.yaml) workflow tells when to upgrade. It validates the upgrade to the latest release in the
+runner and keeps one open GitHub issue, labelled `dcp.sdlc upgrade`, with the result and the command above; the issue is closed once the repository is up to date.
+The upgrade itself cannot be automated with `GITHUB_TOKEN`, which cannot push commits changing workflow files.
 
 Repositories with Dependabot ignore this repository:
 
@@ -70,12 +72,13 @@ The callers grant the listed permissions; reusable workflows cannot exceed them.
   `minor` or `patch`. Permissions: `contents: write`, `packages: write`, `pull-requests: write`.
 * [`container-image-scan.yaml`](.github/workflows/container-image-scan.yaml) scans a published image for vulnerabilities, uploading the results to GitHub code
   scanning. Input `tag`, defaults to `latest`. Permissions: `contents: read`, `security-events: write`.
-* [`dcp-sdlc-upgrade.yaml`](.github/workflows/dcp-sdlc-upgrade.yaml) upgrades to the latest dcp.sdlc release and updates all devenv inputs, validates the result and
-  opens a pull request. Permissions: `contents: write`, `pull-requests: write`.
+* [`dcp-sdlc-check.yaml`](.github/workflows/dcp-sdlc-check.yaml) checks for a newer dcp.sdlc release, validates the upgrade without pushing it and keeps an upgrade
+  issue up to date; it fails when the upgrade does not pass validation. Permissions: `contents: read`, `issues: write`.
+* [`dcp-sdlc-upgrade.yaml`](.github/workflows/dcp-sdlc-upgrade.yaml) is deprecated and will be removed in the next major release: it cannot push the workflow changes of
+  an upgrade with `GITHUB_TOKEN`. Use `dcp-sdlc-check.yaml` instead.
 
-The container image workflows require the devenvbase [`container-image` module](devenvbase/README.md#container-image-module). The release and upgrade workflows
-open pull requests with `GITHUB_TOKEN`, whose workflows run only once a maintainer approves them when reviewing; the upgrade workflow also validates its changes
-before opening the pull request.
+The container image workflows require the devenvbase [`container-image` module](devenvbase/README.md#container-image-module). The release workflow opens its
+version bump pull request with `GITHUB_TOKEN`, whose workflows run only once a maintainer approves them when reviewing.
 
 Example callers:
 
@@ -96,7 +99,7 @@ permissions:
 
 jobs:
   container-image:
-    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-ci.yaml@v1.0.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-ci.yaml@v1.1.0
 
   ci:
     if: always()
@@ -131,7 +134,7 @@ jobs:
       contents: write
       packages: write
       pull-requests: write
-    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-release.yaml@v1.0.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-release.yaml@v1.1.0
     with:
       bump: ${{ inputs.bump }}
 ```
@@ -151,12 +154,12 @@ permissions:
 
 jobs:
   scan:
-    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-scan.yaml@v1.0.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-scan.yaml@v1.1.0
 ```
 
 ```yaml
-# .github/workflows/dcp-sdlc-upgrade.yaml
-name: dcp.sdlc upgrade
+# .github/workflows/dcp-sdlc-check.yaml
+name: dcp.sdlc check
 
 on:
   schedule:
@@ -167,11 +170,11 @@ permissions:
   contents: read
 
 jobs:
-  upgrade:
+  check:
     permissions:
-      contents: write
-      pull-requests: write
-    uses: damsoncloud/dcp.sdlc/.github/workflows/dcp-sdlc-upgrade.yaml@v1.0.0
+      contents: read
+      issues: write
+    uses: damsoncloud/dcp.sdlc/.github/workflows/dcp-sdlc-check.yaml@v1.1.0
 ```
 
 ## Releases
