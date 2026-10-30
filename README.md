@@ -30,6 +30,12 @@ inputs:
 
 New repositories get this set-up from the private [TEMPLATE](https://github.com/damsoncloud/TEMPLATE) repository.
 
+### CI conventions
+
+Each repository has a CI workflow in `.github/workflows/cicd.yaml`, triggered by pull requests and pushes to `main`. Its result is reported by a job named `ci`, the status
+check required by the organisation's ruleset. Workflows calling reusable workflows add a `ci` job depending on them, as in the [example callers](#reusable-workflows),
+because checks of reusable workflows are reported under the calling job's name.
+
 ### Upgrades
 
 Do not upgrade the references by hand or with Dependabot, which can only update the GitHub Actions references. Instead:
@@ -67,8 +73,9 @@ The callers grant the listed permissions; reusable workflows cannot exceed them.
 * [`dcp-sdlc-upgrade.yaml`](.github/workflows/dcp-sdlc-upgrade.yaml) upgrades to the latest dcp.sdlc release and updates all devenv inputs, validates the result and
   opens a pull request. Permissions: `contents: write`, `pull-requests: write`.
 
-The container image workflows require the devenvbase [`container-image` module](devenvbase/README.md#container-image-module). Pull requests opened with
-`GITHUB_TOKEN` do not trigger other workflows, so the upgrade workflow validates its changes itself.
+The container image workflows require the devenvbase [`container-image` module](devenvbase/README.md#container-image-module). The release and upgrade workflows
+open pull requests with `GITHUB_TOKEN`, whose workflows run only once a maintainer approves them when reviewing; the upgrade workflow also validates its changes
+before opening the pull request.
 
 Example callers:
 
@@ -90,6 +97,13 @@ permissions:
 jobs:
   container-image:
     uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-ci.yaml@v1.0.0
+
+  ci:
+    if: always()
+    needs: container-image
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.container-image.result }}" = success
 ```
 
 ```yaml
@@ -175,5 +189,5 @@ Use the devenv environment for building, testing and running code. It ensures us
 * `devenv shell` starts the shell.
 * `devenv test` runs the git hooks.
 
-This repository imports `./devenvbase` directly, so its shell and CI always use the working copy of devenvbase. The
-[`devenvbase-ci.yaml`](.github/workflows/devenvbase-ci.yaml) workflow runs on changes to devenvbase, the composite action and the workflows.
+This repository imports `./devenvbase` directly, so its shell and CI always use the working copy of devenvbase. Its
+[`cicd.yaml`](.github/workflows/cicd.yaml) workflow runs `devenv test` with the working copy of the composite action.
