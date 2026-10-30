@@ -10,7 +10,7 @@ also need the `nixpkgs-python` input.
 ```yaml
 inputs:
   devenvbase:
-    url: github:damsoncloud/dcp.sdlc/v1.0.0?dir=devenvbase
+    url: github:damsoncloud/dcp.sdlc/v1.1.0?dir=devenvbase
     flake: false
   nixpkgs-python:
     url: github:cachix/nixpkgs-python
@@ -47,7 +47,10 @@ Settings below are defaults: a repository's own `devenv.nix` can override them.
   | `gcloud_setup` | Logs in to the `gcloud` CLI and Application Default Credentials, outside CI only. |
   | `version_latest` | Prints the highest released version from `v*` tags, or `0.0.0` without any. |
   | `version_bump <major\|minor\|patch>` | Prints the latest released version bumped by the given part; uv projects also get it set in `pyproject.toml` and `uv.lock`. |
+  | `dcp_sdlc_version` | Prints the dcp.sdlc release devenvbase is pinned to. |
+  | `dcp_sdlc_latest` | Prints the latest dcp.sdlc release. |
   | `dcp_sdlc_upgrade [version]` | Pins GitHub Actions references and devenvbase to a dcp.sdlc release, the latest by default, and updates the devenvbase lock. |
+  | `dcp_sdlc_upgrade_pr [version]` | Upgrades to a dcp.sdlc release, the latest by default, updates all devenv inputs, runs `devenv test` and opens a pull request. |
 
 ## Python baseline
 

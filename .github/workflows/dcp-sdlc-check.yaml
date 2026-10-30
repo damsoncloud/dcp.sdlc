@@ -1,0 +1,105 @@
+name: dcp.sdlc check
+
+# Checks whether a newer dcp.sdlc release is available and validates the upgrade without pushing it, as GITHUB_TOKEN cannot push commits
+# changing workflow files. Keeps one open GitHub issue explaining how to upgrade with `dcp_sdlc_upgrade_pr`, and closes it once the repository
+# is up to date. The job fails when the upgrade does not pass validation.
+# Callers must grant `contents: read` and `issues: write`.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: '0'
+      GH_TOKEN: ${{ github.token }}
+      LABEL: dcp.sdlc upgrade
+
+    steps:
+      - uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v1
+        with:
+          github_access_token: ${{ github.token }}
+          skip_devenv_test: 'true'
+
+      - name: Compare the pinned and the latest dcp.sdlc release
+        id: versions
+        shell: devenv shell bash -- -e {0}
+        run: |
+          current=$(dcp_sdlc_version)
+          latest=$(dcp_sdlc_latest)
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "outdated=$([ "$current" = "$latest" ] && echo false || echo true)" >> "$GITHUB_OUTPUT"
+
+      - if: steps.versions.outputs.outdated == 'true'
+        name: Upgrade in the runner
+        shell: devenv shell bash -- -e {0}
+        env:
+          LATEST: ${{ steps.versions.outputs.latest }}
+        run: |
+          dcp_sdlc_upgrade "$LATEST" >/dev/null
+          devenv update
+
+      - if: steps.versions.outputs.outdated == 'true'
+        name: Validate the upgrade
+        id: validate
+        continue-on-error: true
+        run: |
+          devenv test
+          devenv shell -- bash -e -c '
+            if command -v image_build >/dev/null; then
+              image_build
+              if command -v image_test >/dev/null; then image_test; fi
+              image_scan
+            fi'
+
+      - if: ${{ !cancelled() && steps.versions.outcome == 'success' }}
+        name: Update the upgrade issue
+        shell: devenv shell bash -- -e {0}
+        env:
+          CURRENT: ${{ steps.versions.outputs.current }}
+          LATEST: ${{ steps.versions.outputs.latest }}
+          OUTDATED: ${{ steps.versions.outputs.outdated }}
+          VALIDATION: ${{ steps.validate.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create "$LABEL" --description "A newer dcp.sdlc release is available" --color 0e8a16 --force >/dev/null
+          mapfile -t open < <(gh issue list --label "$LABEL" --state open --json number --jq '.[].number')
+          if [ "$OUTDATED" != true ]; then
+            for number in "${open[@]}"; do
+              gh issue close "$number" --comment "Up to date with dcp.sdlc $CURRENT."
+            done
+            exit 0
+          fi
+          result=$([ "$VALIDATION" = success ] && echo "passed" || echo "**failed**")
+          title="Upgrade dcp.sdlc from $CURRENT to $LATEST"
+          body="[$DCP_SDLC_REPOSITORY $LATEST](https://github.com/$DCP_SDLC_REPOSITORY/releases/tag/$LATEST) is available; this repository is pinned to $CURRENT.
+
+          Validation of the upgrade with \`devenv test\` and, where configured, the container image build, smoke tests and scan: $result ([run]($RUN_URL)).
+
+          Upgrade by running the following command in the repository, which creates a branch, upgrades dcp.sdlc and all devenv inputs, runs
+          \`devenv test\` and opens a pull request:
+
+          \`\`\`shell
+          devenv shell -- dcp_sdlc_upgrade_pr
+          \`\`\`"
+          body=$(sed 's/^ *//' <<<"$body")
+          if [ "${#open[@]}" -gt 0 ]; then
+            gh issue edit "${open[0]}" --title "$title" --body "$body"
+            for number in "${open[@]:1}"; do
+              gh issue close "$number" --comment "Superseded by #${open[0]}."
+            done
+          else
+            gh issue create --title "$title" --body "$body" --label "$LABEL"
+          fi
+
+      - if: steps.validate.outcome == 'failure'
+        name: Fail on a failed validation
+        run: |
+          echo "::error::The upgrade to dcp.sdlc ${{ steps.versions.outputs.latest }} does not pass validation"
+          exit 1

@@ -1,5 +1,7 @@
 name: dcp.sdlc upgrade
 
+# Deprecated, to be removed in the next major release: GITHUB_TOKEN cannot push the workflow changes of an upgrade. Use dcp-sdlc-check.yaml.
+#
 # Upgrades a repository to the latest dcp.sdlc release and updates all devenv inputs, validates the result and opens a pull request.
 # The changes are validated before the pull request is opened: `devenv test` and, for repositories using the devenvbase `container-image`
 # module, the image build, smoke tests and scan. Workflows of pull requests opened with GITHUB_TOKEN run only once a maintainer approves them.
