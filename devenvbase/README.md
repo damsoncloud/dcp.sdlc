@@ -10,7 +10,7 @@ also need the `nixpkgs-python` input.
 ```yaml
 inputs:
   devenvbase:
-    url: github:damsoncloud/dcp.sdlc/v1.1.0?dir=devenvbase
+    url: github:damsoncloud/dcp.sdlc/v2.0.0?dir=devenvbase
     flake: false
   nixpkgs-python:
     url: github:cachix/nixpkgs-python
