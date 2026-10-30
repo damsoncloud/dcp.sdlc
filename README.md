@@ -36,6 +36,10 @@ Each repository has a CI workflow in `.github/workflows/cicd.yaml`, triggered by
 check required by the organisation's ruleset. Workflows calling reusable workflows add a `ci` job depending on them, as in the [example callers](#reusable-workflows),
 because checks of reusable workflows are reported under the calling job's name.
 
+Repositories splitting CI into workflows filtered by paths, e.g. `cicd.yaml` ignoring `packer/**` and `packer-cicd.yaml` running only for it, name the job of each such
+workflow `ci`. A workflow skipped by its path filter reports no check, while every check named `ci` which reports must pass, so each pull request is gated by the
+workflows its changes trigger. Together, the path filters must cover every change: a pull request triggering none of these workflows reports no `ci` and cannot be merged.
+
 ### Upgrades
 
 Do not upgrade the references by hand or with Dependabot, which can only update the GitHub Actions references. Instead, run `dcp_sdlc_upgrade_pr [version]` in
