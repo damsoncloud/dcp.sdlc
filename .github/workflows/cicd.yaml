@@ -1,26 +1,17 @@
-name: CI for the devenvbase folder
+name: CI/CD pipeline
 
 on:
+  workflow_dispatch:
   pull_request:
-    paths:
-      - 'devenvbase/**'
-      - 'devenv.nix'
-      - '.github/workflows/**'
-      - '.github/actions/initialise_devenv/*'
   push:
     branches:
       - main
-    paths:
-      - 'devenvbase/**'
-      - 'devenv.nix'
-      - '.github/workflows/**'
-      - '.github/actions/initialise_devenv/*'
 
 permissions:
   contents: read
 
 jobs:
-  devenvbase-ci:
+  ci:
     runs-on: ubuntu-latest
 
     steps:

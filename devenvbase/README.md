@@ -57,7 +57,19 @@ When a repository enables Python with `languages.python.enable = true`, devenvba
 * uv, with `uv sync` on shell entry,
 * `devenv test` running the git hooks only after `uv sync` finished.
 
-Python dependencies, including `mypy` and `pytest` as development dependencies, belong to the project's `pyproject.toml`.
+Python dependencies, including `mypy`, `pytest` and `pytest-cov` as development dependencies, belong to the project's `pyproject.toml`. Tests must reach at least 90% line
+and branch coverage, configured in `pyproject.toml`, e.g.:
+
+```toml
+[tool.pytest]
+addopts = ["--cov=<package>", "--cov-report=term-missing"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+```
 
 ## Container image module
 

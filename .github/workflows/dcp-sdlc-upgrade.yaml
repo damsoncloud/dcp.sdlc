@@ -1,8 +1,8 @@
 name: dcp.sdlc upgrade
 
 # Upgrades a repository to the latest dcp.sdlc release and updates all devenv inputs, validates the result and opens a pull request.
-# Pull requests opened with GITHUB_TOKEN do not trigger other workflows, so validation runs here: `devenv test` and, for repositories
-# using the devenvbase `container-image` module, the image build, smoke tests and scan.
+# The changes are validated before the pull request is opened: `devenv test` and, for repositories using the devenvbase `container-image`
+# module, the image build, smoke tests and scan. Workflows of pull requests opened with GITHUB_TOKEN run only once a maintainer approves them.
 # Callers must grant `contents: write` and `pull-requests: write`.
 
 on:

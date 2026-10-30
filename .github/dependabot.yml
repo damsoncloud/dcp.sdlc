@@ -1,0 +1,19 @@
+---
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+    # Own actions are referenced by the floating major tag moved by releases
+    ignore:
+      - dependency-name: damsoncloud/dcp.sdlc*
