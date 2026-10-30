@@ -19,13 +19,13 @@ called by the reusable workflows come from devenvbase, so both must always move 
 # devenv.yaml
 inputs:
   devenvbase:
-    url: github:damsoncloud/dcp.sdlc/v1.1.0?dir=devenvbase
+    url: github:damsoncloud/dcp.sdlc/v2.0.0?dir=devenvbase
     flake: false
 ```
 
 ```yaml
 # .github/workflows/*.yaml
-- uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v1.1.0
+- uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v2.0.0
 ```
 
 New repositories get this set-up from the private [TEMPLATE](https://github.com/damsoncloud/TEMPLATE) repository.
@@ -74,8 +74,6 @@ The callers grant the listed permissions; reusable workflows cannot exceed them.
   scanning. Input `tag`, defaults to `latest`. Permissions: `contents: read`, `security-events: write`.
 * [`dcp-sdlc-check.yaml`](.github/workflows/dcp-sdlc-check.yaml) checks for a newer dcp.sdlc release, validates the upgrade without pushing it and keeps an upgrade
   issue up to date; it fails when the upgrade does not pass validation. Permissions: `contents: read`, `issues: write`.
-* [`dcp-sdlc-upgrade.yaml`](.github/workflows/dcp-sdlc-upgrade.yaml) is deprecated and will be removed in the next major release: it cannot push the workflow changes of
-  an upgrade with `GITHUB_TOKEN`. Use `dcp-sdlc-check.yaml` instead.
 
 The container image workflows require the devenvbase [`container-image` module](devenvbase/README.md#container-image-module). The release workflow opens its
 version bump pull request with `GITHUB_TOKEN`, whose workflows run only once a maintainer approves them when reviewing.
@@ -99,7 +97,7 @@ permissions:
 
 jobs:
   container-image:
-    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-ci.yaml@v1.1.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-ci.yaml@v2.0.0
 
   ci:
     if: always()
@@ -134,7 +132,7 @@ jobs:
       contents: write
       packages: write
       pull-requests: write
-    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-release.yaml@v1.1.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-release.yaml@v2.0.0
     with:
       bump: ${{ inputs.bump }}
 ```
@@ -154,7 +152,7 @@ permissions:
 
 jobs:
   scan:
-    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-scan.yaml@v1.1.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/container-image-scan.yaml@v2.0.0
 ```
 
 ```yaml
@@ -174,7 +172,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-    uses: damsoncloud/dcp.sdlc/.github/workflows/dcp-sdlc-check.yaml@v1.1.0
+    uses: damsoncloud/dcp.sdlc/.github/workflows/dcp-sdlc-check.yaml@v2.0.0
 ```
 
 ## Releases
@@ -182,7 +180,7 @@ jobs:
 Releases follow [semantic versioning](https://semver.org/). The [`release.yaml`](.github/workflows/release.yaml) workflow, dispatched manually on `main` with the part
 of the version to increase, tags `main` as `vX.Y.Z`, moves the floating major tag `vX` to it and creates a GitHub release.
 
-The reusable workflows reference this repository's composite action by the floating major tag, e.g. `initialise_devenv@v1`, because `GITHUB_TOKEN` cannot push commits
+The reusable workflows reference this repository's composite action by the floating major tag, e.g. `initialise_devenv@v2`, because `GITHUB_TOKEN` cannot push commits
 changing workflow files. Before a major release, change these references to the new major in a pull request; the release refuses to proceed otherwise.
 
 ## Contributing
