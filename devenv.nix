@@ -1,7 +1,21 @@
+{ pkgs, ... }:
+
 let
   actionReference = "damsoncloud/dcp\\.sdlc/\\.github/actions/[^@[:space:]]+@";
 in
 {
+  packages = [
+    # keep-sorted start
+    (pkgs.bats.withLibraries (p: [
+      p.bats-assert
+      p.bats-support
+    ]))
+    pkgs.shellcheck
+    # keep-sorted end
+  ];
+
+  enterTest = "bats tests";
+
   scripts.release_tag = {
     description = "Tag HEAD with the latest release bumped by <major|minor|patch>, move the floating major tag to it and print the release tag";
     exec = ''

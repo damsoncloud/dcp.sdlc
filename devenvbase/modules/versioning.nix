@@ -13,7 +13,8 @@ in
       description = "Print the highest released version from `v*` tags, or 0.0.0 without any";
       exec = ''
         latest=$(git -C "$DEVENV_ROOT" tag --list 'v*.*.*' --sort=-v:refname | head -n 1)
-        echo "''${latest:-v0.0.0}" | sed 's/^v//'
+        latest="''${latest:-v0.0.0}"
+        echo "''${latest#v}"
       '';
     };
 
