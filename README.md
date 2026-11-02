@@ -197,7 +197,7 @@ Use the devenv environment for building, testing and running code. It ensures us
 
 Each test runs a script in a temporary git repository with isolated git configuration. Commands with side effects outside the repository, e.g. `devenv` or `gh`,
 are replaced with stubs recording their arguments, see [`tests/test_helper.bash`](tests/test_helper.bash). The tests cover the scripts as configured in this
-repository's shell, so branches depending on other module options, e.g. uv, are not tested.
+repository's shell, which enables the container image module only for them, so branches depending on other module options, e.g. uv, are not tested.
 
 This repository imports `./devenvbase` directly, so its shell and CI always use the working copy of devenvbase. Its
 [`cicd.yaml`](.github/workflows/cicd.yaml) workflow runs `devenv test` with the working copy of the composite action.

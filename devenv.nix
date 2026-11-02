@@ -16,6 +16,13 @@ in
 
   enterTest = "bats tests";
 
+  # Only for tests/container-image.bats, which stubs podman and trivy
+  dcp.containerImage = {
+    enable = true;
+    smokeTest = "true";
+    run.passEnv = [ "DRY_RUN" ];
+  };
+
   scripts.release_tag = {
     description = "Tag HEAD with the latest release bumped by <major|minor|patch>, move the floating major tag to it and print the release tag";
     exec = ''
