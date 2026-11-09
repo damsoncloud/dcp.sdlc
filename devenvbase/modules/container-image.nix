@@ -109,13 +109,15 @@ in
         description = "Scan the container image for vulnerabilities, failing on fixable ${cfg.scanSeverity} ones; optionally write a SARIF report: [sarif-file]";
         exec = ''
           set -euo pipefail
+          export TRIVY_DISABLE_VEX_NOTICE=true
           archive=$(mktemp --suffix=.tar)
           trap 'rm -f "$archive"' EXIT
           podman save --format docker-archive --output "$archive" "$IMAGE"
+          common_scan_args=(--skip-version-check --input "$archive" --ignore-unfixed)
           if [ -n "''${1:-}" ]; then
-            trivy image --input "$archive" --ignore-unfixed --format sarif --output "$1"
+            trivy image "''${common_scan_args[@]}" --format sarif --output "$1"
           fi
-          trivy image --input "$archive" --ignore-unfixed --severity ${cfg.scanSeverity} --exit-code 1
+          trivy image "''${common_scan_args[@]}" --severity ${cfg.scanSeverity} --exit-code 1
         '';
       };
 

@@ -36,14 +36,23 @@ setup() {
   archive=$(sed -nE "s#^save --format docker-archive --output ([^ ]+) $IMAGE\$#\1#p" "$STUBS/podman.calls")
   assert [ -n "$archive" ]
   assert [ ! -e "$archive" ]
-  assert_equal "$(cat "$STUBS/trivy.calls")" "image --input $archive --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1"
+  assert_equal "$(cat "$STUBS/trivy.calls")" "image --skip-version-check --input $archive --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1"
 }
 
 @test "image_scan writes a SARIF report of all fixable vulnerabilities" {
   run image_scan report.sarif
   assert_success
-  run grep -c -- "^image --input [^ ]* --ignore-unfixed --format sarif --output report.sarif$" "$STUBS/trivy.calls"
+  run grep -c -- "^image --skip-version-check --input [^ ]* --ignore-unfixed --format sarif --output report.sarif$" "$STUBS/trivy.calls"
   assert_output 1
+}
+
+@test "image_scan disables Trivy's VEX notice" {
+  unset TRIVY_DISABLE_VEX_NOTICE
+  # shellcheck disable=SC2016 # expanded by the stub
+  stub trivy 'echo "${TRIVY_DISABLE_VEX_NOTICE:-unset}" >>"$0.env"'
+  run image_scan report.sarif
+  assert_success
+  assert_equal "$(cat "$STUBS/trivy.env")" $'true\ntrue'
 }
 
 @test "image_scan fails when trivy finds vulnerabilities" {
