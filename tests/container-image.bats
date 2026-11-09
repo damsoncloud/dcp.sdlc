@@ -27,22 +27,28 @@ setup() {
   assert_output 1
 }
 
-@test "image_scan scans the saved image for fixable vulnerabilities and removes the archive" {
+@test "image_scan scans the saved image from a stable relative path and removes it" {
   # shellcheck disable=SC2016 # expanded by the stub
   stub podman '[ "$1" = save ] && touch "$5"'
+  # shellcheck disable=SC2016 # expanded by the stub
+  stub trivy '[ -e image.tar ] && echo found >>"$0.input"'
   run image_scan
   assert_success
   local archive
-  archive=$(sed -nE "s#^save --format docker-archive --output ([^ ]+) $IMAGE\$#\1#p" "$STUBS/podman.calls")
+  archive=$(sed -nE "s#^save --format docker-archive --output ([^ ]+/image\.tar) $IMAGE\$#\1#p" "$STUBS/podman.calls")
   assert [ -n "$archive" ]
-  assert [ ! -e "$archive" ]
-  assert_equal "$(cat "$STUBS/trivy.calls")" "image --skip-version-check --input $archive --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1"
+  assert [ ! -e "$(dirname "$archive")" ]
+  assert_equal "$(cat "$STUBS/trivy.calls")" "image --skip-version-check --input image.tar --ignore-unfixed --severity HIGH,CRITICAL --exit-code 1"
+  assert_equal "$(cat "$STUBS/trivy.input")" found
 }
 
-@test "image_scan writes a SARIF report of all fixable vulnerabilities" {
+@test "image_scan writes a SARIF report of all fixable vulnerabilities relative to the working directory" {
+  # shellcheck disable=SC2016 # expanded by the stub
+  stub trivy 'while (($#)); do [ "$1" = --output ] && touch "$2"; shift; done'
   run image_scan report.sarif
   assert_success
-  run grep -c -- "^image --skip-version-check --input [^ ]* --ignore-unfixed --format sarif --output report.sarif$" "$STUBS/trivy.calls"
+  assert [ -e "$DEVENV_ROOT/report.sarif" ]
+  run grep -c -- "^image --skip-version-check --input image.tar --ignore-unfixed --format sarif --output $DEVENV_ROOT/report.sarif$" "$STUBS/trivy.calls"
   assert_output 1
 }
 

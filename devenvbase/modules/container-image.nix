@@ -110,12 +110,15 @@ in
         exec = ''
           set -euo pipefail
           export TRIVY_DISABLE_VEX_NOTICE=true
-          archive=$(mktemp --suffix=.tar)
-          trap 'rm -f "$archive"' EXIT
-          podman save --format docker-archive --output "$archive" "$IMAGE"
-          common_scan_args=(--skip-version-check --input "$archive" --ignore-unfixed)
-          if [ -n "''${1:-}" ]; then
-            trivy image "''${common_scan_args[@]}" --format sarif --output "$1"
+          report=''${1:+$(realpath --canonicalize-missing "$1")}
+          workdir=$(mktemp --directory)
+          trap 'rm -rf "$workdir"' EXIT
+          podman save --format docker-archive --output "$workdir/image.tar" "$IMAGE"
+          # Trivy reports the input path as the location of findings, so a stable relative path keeps code scanning alerts matched across scans
+          cd "$workdir"
+          common_scan_args=(--skip-version-check --input image.tar --ignore-unfixed)
+          if [ -n "$report" ]; then
+            trivy image "''${common_scan_args[@]}" --format sarif --output "$report"
           fi
           trivy image "''${common_scan_args[@]}" --severity ${cfg.scanSeverity} --exit-code 1
         '';
