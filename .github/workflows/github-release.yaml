@@ -1,0 +1,42 @@
+name: GitHub release
+
+# Releases a repository whose release is only its tag, e.g. a Terraform module published by the Terraform Registry from its tags:
+# bumps the version from the latest `v*` tag and creates a GitHub release with the `vX.Y.Z` tag. No floating major tag is created,
+# so the tags of immutable releases are never moved. Runs only on the default branch.
+# Callers must grant `contents: write`.
+
+on:
+  workflow_call:
+    inputs:
+      bump:
+        description: Part of the semantic version to increase (major, minor or patch)
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.repository }}
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: damsoncloud/dcp.sdlc/.github/actions/initialise_devenv@v2
+        with:
+          checkout_fetch_depth: 0
+          github_access_token: ${{ github.token }}
+
+      - name: Bump the version from the latest release tag
+        shell: devenv shell bash -- -e {0}
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: echo "VERSION=$(version_bump "$BUMP")" >> "$GITHUB_ENV"
+
+      - name: Create the GitHub release
+        run: gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes

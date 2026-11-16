@@ -76,6 +76,9 @@ The callers grant the listed permissions; reusable workflows cannot exceed them.
   `minor` or `patch`. Permissions: `contents: write`, `packages: write`, `pull-requests: write`.
 * [`container-image-scan.yaml`](.github/workflows/container-image-scan.yaml) scans a published image for vulnerabilities, uploading the results to GitHub code
   scanning. Input `tag`, defaults to `latest`. Permissions: `contents: read`, `security-events: write`.
+* [`github-release.yaml`](.github/workflows/github-release.yaml) bumps the version from the latest `v*` tag and creates a GitHub release with its `vX.Y.Z` tag,
+  without a floating major tag. For repositories whose release is only the tag, e.g. Terraform modules, which the Terraform Registry publishes from their tags.
+  Runs on the default branch only. Input `bump`: `major`, `minor` or `patch`. Permissions: `contents: write`.
 * [`dcp-sdlc-check.yaml`](.github/workflows/dcp-sdlc-check.yaml) checks for a newer dcp.sdlc release, validates the upgrade without pushing it and keeps an upgrade
   issue up to date; it fails when the upgrade does not pass validation. Permissions: `contents: read`, `issues: write`.
 
@@ -140,6 +143,8 @@ jobs:
     with:
       bump: ${{ inputs.bump }}
 ```
+
+Repositories released with `github-release.yaml` call it the same way, with `contents: write` as the only permission.
 
 ```yaml
 # .github/workflows/scan.yaml
