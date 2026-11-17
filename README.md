@@ -5,7 +5,7 @@ it, and reusable GitHub Actions workflows for container images and for keeping r
 
 ## Contents
 
-* [`devenvbase/`](devenvbase/README.md) - reusable base for devenv configurations: git hooks, Python baseline, container image and versioning scripts.
+* [`devenvbase/`](devenvbase/README.md) - reusable base for devenv configurations: git hooks, Python baseline, Terraform module, container image and versioning scripts.
 * [`.github/actions/initialise_devenv/`](.github/actions/initialise_devenv/action.yml) - composite action installing Nix and devenv, running `devenv test` and
   optionally authenticating to Google Cloud.
 * [`.github/workflows/`](.github/workflows/) - reusable workflows (`workflow_call`) and this repository's own CI and release workflows.

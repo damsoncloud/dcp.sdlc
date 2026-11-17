@@ -5,7 +5,7 @@ Reusable base for [devenv](https://devenv.sh) configurations of Damson Cloud rep
 ## Usage
 
 Add the input and the import to the repository's `devenv.yaml`, pinned to a [dcp.sdlc release](../README.md#using-dcpsdlc-in-a-repository). Repositories enabling Python
-also need the `nixpkgs-python` input.
+also need the `nixpkgs-python` input, and Terraform module repositories the `nixpkgs-terraform` input (`url: github:stackbuilders/nixpkgs-terraform`).
 
 ```yaml
 inputs:
@@ -73,6 +73,34 @@ branch = true
 [tool.coverage.report]
 fail_under = 90
 ```
+
+## Terraform module
+
+Opt-in set-up of a reusable Terraform module repository, e.g. a module published on the Terraform Registry:
+
+```nix
+dcp.terraformModule.enable = true;
+```
+
+It sets:
+
+* Terraform `1.15.9` from the `nixpkgs-terraform` input, with `terraform-ls` and `tfsec`. The version is changed with `languages.terraform.version`; other packages, e.g.
+  OpenTofu, are not supported,
+* the `terraform-docs` git hook and `terraform_docs` script, generating the inputs and outputs of the module, and of its submodules in `modules/`, in their `README.md`
+  between the `<!-- BEGIN_TF_DOCS -->` and `<!-- END_TF_DOCS -->` markers. The hook fails when a `README.md` or its markers are missing,
+* `devenv test` running `terraform test` of the root module with the tests in `tests/`, after the git hooks, from any directory of the repository.
+
+The hook fails when the documentation is out of date, so `devenv test` in CI fails until the regenerated `README.md` is committed.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `enable` | `false` | Enables the module. |
+| `docs.enable` | `true` | Enables the `terraform-docs` git hook; the `terraform_docs` script is always available. |
+| `test.enable` | `true` | Runs `terraform test` in `devenv test`. |
+
+`terraform test` only runs the test files directly in `tests/`, not in its subdirectories. Tests creating real resources (`command = apply` without `mock_provider`)
+therefore belong to a subdirectory, e.g. `tests/integration/`, and are run explicitly with `terraform test -test-directory=tests/integration`, so `devenv test` never creates
+resources. A repository running its tests differently sets `test.enable = false` and its own `enterTest`.
 
 ## Container image module
 
