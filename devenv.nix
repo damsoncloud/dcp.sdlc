@@ -23,6 +23,13 @@ in
     run.passEnv = [ "DRY_RUN" ];
   };
 
+  # Only for tests/terraform-module.bats, which tests the terraform_docs script; this repository has no Terraform module to document or test
+  dcp.terraformModule = {
+    enable = true;
+    docs.enable = false;
+    test.enable = false;
+  };
+
   scripts.release_tag = {
     description = "Tag HEAD with the latest release bumped by <major|minor|patch>, move the floating major tag to it and print the release tag";
     exec = ''

@@ -13,6 +13,7 @@ in
     ./modules/container-image.nix
     ./modules/python.nix
     ./modules/sdlc.nix
+    ./modules/terraform-module.nix
     ./modules/versioning.nix
   ];
 
