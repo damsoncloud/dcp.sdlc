@@ -17,8 +17,9 @@ let
     # Like enterTest, the module is in the devenv root; git hooks run outside the shell fall back to it as evaluated
     root="''${DEVENV_ROOT:-${config.devenv.root}}"
 
-    # Generated table rows cannot be wrapped, so only they are excluded from the line length check
-    template=$'<!-- BEGIN_TF_DOCS -->\n<!-- markdownlint-disable MD013 -->\n{{ .Content }}\n<!-- markdownlint-enable MD013 -->\n<!-- END_TF_DOCS -->'
+    # Generated table rows cannot be wrapped, so only they are excluded from the line length check. Restoring rather than enabling the rule keeps
+    # its previous state, e.g. disabled in an editor's configuration.
+    template=$'<!-- BEGIN_TF_DOCS -->\n<!-- markdownlint-capture -->\n<!-- markdownlint-disable MD013 -->\n{{ .Content }}\n<!-- markdownlint-restore -->\n<!-- END_TF_DOCS -->'
     args=(markdown table --output-file README.md --output-mode inject --anchor=false --html=false --show "inputs,outputs" --output-template "$template")
     readmes=("$root/README.md")
     # --recursive fails when the module has no submodules
