@@ -6,8 +6,10 @@ it, and reusable GitHub Actions workflows for container images and for keeping r
 ## Contents
 
 * [`devenvbase/`](devenvbase/README.md) - reusable base for devenv configurations: git hooks, Python baseline, Terraform module, container image and versioning scripts.
-* [`.github/actions/initialise_devenv/`](.github/actions/initialise_devenv/action.yml) - composite action installing Nix and devenv, running `devenv test` and
-  optionally authenticating to Google Cloud.
+* [`.github/actions/initialise_devenv/`](.github/actions/initialise_devenv/action.yml) - composite action installing Nix and devenv, running `devenv test` and optionally
+  authenticating to Google Cloud.
+* [`.github/actions/dcp_sdlc_versions/`](.github/actions/dcp_sdlc_versions/action.yml) - composite action comparing the pinned and the latest dcp.sdlc release without Nix or
+  devenv.
 * [`.github/workflows/`](.github/workflows/) - reusable workflows (`workflow_call`) and this repository's own CI and release workflows.
 
 ## Using dcp.sdlc in a repository
@@ -57,13 +59,17 @@ ignore:
   - dependency-name: damsoncloud/dcp.sdlc*
 ```
 
-## Composite action
+## Composite actions
 
 [`initialise_devenv`](.github/actions/initialise_devenv/action.yml) prepares a GitHub Actions runner: it checks out the repository, installs Nix and devenv, configures
 the public Cachix caches and runs `devenv test`. Optionally it caches the Nix store and Podman images and authenticates to Google Cloud with Workload Identity
 Federation. See the action's description and inputs for details.
 
 Subsequent steps run commands in the devenv shell with `shell: devenv shell bash -- -e {0}`.
+
+[`dcp_sdlc_versions`](.github/actions/dcp_sdlc_versions/action.yml) outputs the `current` and `latest` dcp.sdlc releases, whether the repository is `outdated` and the
+dcp.sdlc `repository`, running the same [scripts](devenvbase/scripts/) as `dcp_sdlc_version` and `dcp_sdlc_latest` without installing Nix or devenv. Input `repository`
+defaults to `damsoncloud/dcp.sdlc`.
 
 ## Reusable workflows
 
@@ -189,7 +195,7 @@ jobs:
 Releases follow [semantic versioning](https://semver.org/). The [`release.yaml`](.github/workflows/release.yaml) workflow, dispatched manually on `main` with the part
 of the version to increase, tags `main` as `vX.Y.Z`, moves the floating major tag `vX` to it and creates a GitHub release.
 
-The reusable workflows reference this repository's composite action by the floating major tag, e.g. `initialise_devenv@v2`, because `GITHUB_TOKEN` cannot push commits
+The reusable workflows reference this repository's composite actions by the floating major tag, e.g. `initialise_devenv@v2`, because `GITHUB_TOKEN` cannot push commits
 changing workflow files. Before a major release, change these references to the new major in a pull request; the release refuses to proceed otherwise.
 
 ## Contributing

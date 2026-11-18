@@ -5,22 +5,21 @@ let
   name = baseNameOf repository;
 in
 {
+  env.DCP_SDLC_DEVENVBASE = devenvbase;
   env.DCP_SDLC_REPOSITORY = repository;
 
   scripts = {
     dcp_sdlc_version = {
       description = "Print the ${repository} release ${devenvbase} is pinned to.";
       exec = ''
-        sed -nE 's#.*github:${repository}/([^?[:space:]]+)\?dir=${devenvbase}.*#\1#p' "$DEVENV_ROOT/devenv.yaml" | head -n 1
+        exec ${../scripts/dcp_sdlc_version.sh}
       '';
     };
 
     dcp_sdlc_latest = {
       description = "Print the latest ${repository} release.";
       exec = ''
-        set -euo pipefail
-        latest=$(git ls-remote --tags --refs "https://github.com/${repository}" 'v*.*.*' | sed 's#.*refs/tags/##' | sort -V | tail -n 1)
-        echo "''${latest:?no ${repository} release found}"
+        exec ${../scripts/dcp_sdlc_latest.sh}
       '';
     };
 
