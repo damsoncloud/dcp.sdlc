@@ -135,5 +135,11 @@ dcp.containerImage = {
 | `image_run [podman options]` | Runs the container locally, mounting Application Default Credentials read-only when present. |
 | `image_push` | Pushes the image to `REGISTRY_IMAGE` tagged with the version, its `major.minor`, `major` and `latest`. |
 
+On Linux, unless running as root or the storage is already configured by `CONTAINERS_STORAGE_CONF`, `CONTAINERS_STORAGE_CONF_OVERRIDE` or a user-level
+`~/.config/containers/storage.conf`, the shell exports `CONTAINERS_STORAGE_CONF_OVERRIDE` pointing to a generated override of `graphroot` and `runroot` with Podman's
+rootless default locations; other system settings, e.g. the driver, still apply. Podman 6 applies all fields of the system `storage.conf` to rootless users too, so the
+rootful `graphroot` of e.g. Ubuntu's `/usr/share/containers/storage.conf`, present on GitHub-hosted runners, would otherwise fail rootless builds
+([Red Hat bug 2537131](https://bugzilla.redhat.com/show_bug.cgi?id=2537131)). Podman 5 does not read the override for storage.
+
 A Containerfile using the build arguments declares them, e.g. `ARG PYTHON_VERSION` followed by `FROM docker.io/library/python:${PYTHON_VERSION}-slim`, so the image
 uses the same Python and uv versions as the development environment.

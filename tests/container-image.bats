@@ -8,8 +8,84 @@ setup() {
   export CLOUDSDK_CONFIG="$BATS_TEST_TMPDIR/gcloud"
 }
 
+# Run the storage configuration script with the given environment assignments in an isolated HOME, without user-level configuration
+storage_conf() {
+  env -u CONTAINERS_STORAGE_CONF -u CONTAINERS_STORAGE_CONF_OVERRIDE -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_RUNTIME_DIR -u TMPDIR \
+    HOME="$BATS_TEST_TMPDIR/home" "$@" "$BATS_TEST_DIRNAME/../devenvbase/scripts/container_storage_conf.sh" "$BATS_TEST_TMPDIR/state/storage.conf"
+}
+
 @test "scripts pass shellcheck" {
   assert_shellcheck image_build image_scan image_push image_run image_test
+  run shellcheck "$BATS_TEST_DIRNAME/../devenvbase/scripts/container_storage_conf.sh"
+  assert_success
+}
+
+@test "container_storage_conf writes Podman's rootless default locations" {
+  # A uid without /run/user/<uid> falls back to the temporary directory, as in Podman
+  stub id 'echo 4242'
+  run storage_conf
+  assert_success
+  assert_equal "$(cat "$BATS_TEST_TMPDIR/state/storage.conf")" "[storage]
+graphroot = \"$BATS_TEST_TMPDIR/home/.local/share/containers/storage\"
+runroot = \"/tmp/storage-run-4242/containers\""
+}
+
+@test "container_storage_conf follows the XDG data and runtime directories, with or without trailing slashes" {
+  run storage_conf XDG_DATA_HOME=/data/ XDG_RUNTIME_DIR=/run/user/1001/
+  assert_success
+  run grep -cE '^(graphroot = "/data/containers/storage"|runroot = "/run/user/1001/containers")$' "$BATS_TEST_TMPDIR/state/storage.conf"
+  assert_output 2
+}
+
+@test "container_storage_conf falls back to TMPDIR without XDG_RUNTIME_DIR and /run/user/<uid>" {
+  stub id 'echo 4242'
+  run storage_conf TMPDIR=/scratch/
+  assert_success
+  run grep -cx 'runroot = "/scratch/storage-run-4242/containers"' "$BATS_TEST_TMPDIR/state/storage.conf"
+  assert_output 1
+}
+
+@test "container_storage_conf prefers a private /run/user/<uid> without XDG_RUNTIME_DIR" {
+  local dir
+  dir=/run/user/$(id -u)
+  [ -d "$dir" ] && [ -O "$dir" ] && [ "$(stat -c %a "$dir")" = 700 ] || skip "no private $dir"
+  run storage_conf
+  assert_success
+  run grep -cx "runroot = \"$dir/containers\"" "$BATS_TEST_TMPDIR/state/storage.conf"
+  assert_output 1
+}
+
+@test "container_storage_conf skips a configuration set by CONTAINERS_STORAGE_CONF or CONTAINERS_STORAGE_CONF_OVERRIDE" {
+  for variable in CONTAINERS_STORAGE_CONF CONTAINERS_STORAGE_CONF_OVERRIDE; do
+    run storage_conf "$variable=/etc/custom.conf"
+    assert_failure 2
+  done
+  assert [ ! -e "$BATS_TEST_TMPDIR/state/storage.conf" ]
+}
+
+@test "container_storage_conf skips a user-level configuration" {
+  mkdir -p "$BATS_TEST_TMPDIR/config/containers"
+  touch "$BATS_TEST_TMPDIR/config/containers/storage.conf"
+  run storage_conf XDG_CONFIG_HOME="$BATS_TEST_TMPDIR/config"
+  assert_failure 2
+  assert [ ! -e "$BATS_TEST_TMPDIR/state/storage.conf" ]
+}
+
+@test "container_storage_conf skips root and other systems than Linux" {
+  stub id 'echo 0'
+  run storage_conf
+  assert_failure 2
+  stub id 'echo 1000'
+  stub uname 'echo Darwin'
+  run storage_conf
+  assert_failure 2
+  assert [ ! -e "$BATS_TEST_TMPDIR/state/storage.conf" ]
+}
+
+@test "container_storage_conf fails distinctly when the override cannot be written" {
+  touch "$BATS_TEST_TMPDIR/state"
+  run storage_conf
+  assert_failure 1
 }
 
 @test "image_build builds the image with the version, revision and last commit's time" {

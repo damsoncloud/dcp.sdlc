@@ -82,6 +82,14 @@ in
   config = lib.mkIf cfg.enable {
     env.IMAGE = cfg.name;
 
+    enterShell = ''
+      if ${../scripts/container_storage_conf.sh} "$DEVENV_STATE/containers/storage.conf"; then
+        export CONTAINERS_STORAGE_CONF_OVERRIDE="$DEVENV_STATE/containers/storage.conf"
+      elif [ $? != 2 ]; then
+        echo "Writing the Podman storage configuration override failed; rootless Podman may use rootful storage locations" >&2
+      fi
+    '';
+
     packages = [
       # keep-sorted start
       pkgs.podman
