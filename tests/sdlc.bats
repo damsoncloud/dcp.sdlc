@@ -24,8 +24,8 @@ publish_releases() {
 devenv_yaml() {
   cat <<EOF
 inputs:
-  devenvbase:
-    url: github:$DCP_SDLC_REPOSITORY$1?dir=devenvbase
+  $DCP_SDLC_DEVENVBASE:
+    url: github:$DCP_SDLC_REPOSITORY$1?dir=$DCP_SDLC_DEVENVBASE
     flake: false
 EOF
 }
@@ -44,6 +44,14 @@ EOF
 
 @test "scripts pass shellcheck" {
   assert_shellcheck dcp_sdlc_version dcp_sdlc_latest dcp_sdlc_upgrade dcp_sdlc_upgrade_pr
+  run shellcheck "$BATS_TEST_DIRNAME"/../devenvbase/scripts/dcp_sdlc_*.sh
+  assert_success
+}
+
+@test "dcp_sdlc_versions action defaults to the devenv repository and devenvbase names" {
+  run cat "$BATS_TEST_DIRNAME/../.github/actions/dcp_sdlc_versions/action.yml"
+  assert_line "    default: $DCP_SDLC_REPOSITORY"
+  assert_line "        DCP_SDLC_DEVENVBASE: $DCP_SDLC_DEVENVBASE"
 }
 
 @test "dcp_sdlc_version prints the release devenvbase is pinned to" {
@@ -77,7 +85,7 @@ EOF
   assert_equal "$(cat devenv.yaml)" "$(devenv_yaml /v2.0.0)"
   assert_equal "$(cat .github/workflows/cicd.yaml)" "$(workflow v2.0.0)"
   assert_equal "$(cat .github/workflows/scan.yml)" "$(workflow v2.0.0)"
-  assert_equal "$(cat "$STUBS/devenv.calls")" "update devenvbase"
+  assert_equal "$(cat "$STUBS/devenv.calls")" "update $DCP_SDLC_DEVENVBASE"
 }
 
 @test "dcp_sdlc_upgrade pins an unpinned devenvbase and is idempotent" {
@@ -121,7 +129,7 @@ setup_origin() {
   assert_equal "$(git rev-parse "origin/$branch~")" "$(git rev-parse origin/main)"
   assert_equal "$(git show "origin/$branch:devenv.yaml")" "$(devenv_yaml /v2.0.0)"
   assert_equal "$(git show "origin/$branch:.github/workflows/cicd.yaml")" "$(workflow v2.0.0)"
-  assert_equal "$(cat "$STUBS/devenv.calls")" $'update devenvbase\nupdate\ntest'
+  assert_equal "$(cat "$STUBS/devenv.calls")" "update $DCP_SDLC_DEVENVBASE"$'\nupdate\ntest'
   run grep "^pr create --base main --head $branch --title $title --body " "$STUBS/gh.calls"
   assert_success
 }

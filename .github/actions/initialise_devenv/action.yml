@@ -4,7 +4,8 @@ description: >
     - deletes directory with huge but unnecessary cached files
     - checkouts the repository
     - installs Nix
-    - caches Nix store if enabled via `cache_nix_store` flag with `'true'` value (defaults to `'false'`)
+    - caches Nix store if enabled via `cache_nix_store` flag with `'true'` value (defaults to `'false'`),
+      restoring only, without saving, when `cache_nix_store_save` is `'false'` (defaults to `'true'`)
     - caches Podman objects if enabled via `cache_podman` flag with `'true'` value (defaults to `'false'`),
       keyed by the content of files matching the `cache_podman_key_files` glob pattern (required when caching Podman objects)
     - configures most common cachix public binary caches (python, terraform, devenv)
@@ -18,6 +19,10 @@ inputs:
     description: Execute step which caches nix-store
     required: false
     default: 'false'
+  cache_nix_store_save:
+    description: Save the nix-store cache when `cache_nix_store` is enabled; 'false' only restores it
+    required: false
+    default: 'true'
   cache_podman:
     description: Execute step which caches podman objects
     required: false
@@ -77,6 +82,7 @@ runs:
         primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/devenv.lock') }}
         restore-prefixes-first-match: nix-${{ runner.os }}-
         gc-max-store-size-linux: 3G
+        save: ${{ inputs.cache_nix_store_save }}
 
     - if: ${{ inputs.cache_podman == 'true' && inputs.cache_podman_key_files == '' }}
       name: Validate podman caching inputs

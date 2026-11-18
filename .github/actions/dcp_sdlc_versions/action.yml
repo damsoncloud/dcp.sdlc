@@ -1,0 +1,42 @@
+name: Compare dcp.sdlc releases
+description: >
+  Compares the dcp.sdlc release the checked-out repository's devenvbase is pinned to with the latest release, without Nix or devenv, using the
+  scripts behind the `dcp_sdlc_version` and `dcp_sdlc_latest` devenv scripts.
+
+inputs:
+  repository:
+    description: dcp.sdlc repository as owner/name
+    required: false
+    default: damsoncloud/dcp.sdlc
+
+outputs:
+  current:
+    description: Release the repository is pinned to
+    value: ${{ steps.versions.outputs.current }}
+  latest:
+    description: Latest release
+    value: ${{ steps.versions.outputs.latest }}
+  outdated:
+    description: "'true' when the pinned release is not the latest, 'false' otherwise"
+    value: ${{ steps.versions.outputs.outdated }}
+  repository:
+    description: dcp.sdlc repository as owner/name
+    value: ${{ inputs.repository }}
+
+runs:
+  using: composite
+  steps:
+    - id: versions
+      shell: bash
+      env:
+        DCP_SDLC_DEVENVBASE: devenvbase
+        DCP_SDLC_REPOSITORY: ${{ inputs.repository }}
+      run: |
+        scripts="$GITHUB_ACTION_PATH/../../../$DCP_SDLC_DEVENVBASE/scripts"
+        current=$("$scripts/dcp_sdlc_version.sh")
+        latest=$("$scripts/dcp_sdlc_latest.sh")
+        {
+          echo "current=$current"
+          echo "latest=$latest"
+          echo "outdated=$([ "$current" = "$latest" ] && echo false || echo true)"
+        } >> "$GITHUB_OUTPUT"
