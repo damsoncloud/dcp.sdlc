@@ -47,6 +47,36 @@ let
 
     ${lib.getExe pkgs.terraform-docs} "''${args[@]}" "$@" "$root"
   '';
+
+  # A module calling providers through aliases, declared with `configuration_aliases`, cannot be validated on its own, as only its callers configure them;
+  # a temporary file in its directory configures them empty while it is validated
+  terraformValidate = pkgs.writeShellScript "terraform-validate" ''
+    set -euo pipefail
+
+    terraform=${lib.getExe config.git-hooks.hooks.terraform-validate.package}
+
+    # Make sure temporary file is removed also when the validation fails
+    aliases_file=""
+    trap 'if [ -n "$aliases_file" ]; then rm -f "$aliases_file"; fi' EXIT
+
+    mapfile -t dirs < <(for file in "$@"; do dirname "$file"; done | sort -u)
+    for dir in "''${dirs[@]}"; do
+      aliases=$(cat "$dir"/*.tf 2>/dev/null | tr '\n' ' ' | grep -oE 'configuration_aliases[[:space:]]*=[[:space:]]*\[[^]]*\]' |
+        grep -oE '[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | sort -u || true)
+      if [ -n "$aliases" ]; then
+        aliases_file="$dir/zz_validate_provider_aliases.tf"
+        for alias in $aliases; do
+          printf 'provider "%s" {\n  alias = "%s"\n}\n\n' "''${alias%%.*}" "''${alias#*.}"
+        done >"$aliases_file"
+      fi
+      "$terraform" -chdir="$dir" init -backend=false -input=false
+      "$terraform" -chdir="$dir" validate
+      if [ -n "$aliases_file" ]; then
+        rm -f "$aliases_file"
+        aliases_file=""
+      fi
+    done
+  '';
 in
 {
   options.dcp.terraformModule = {
@@ -78,6 +108,13 @@ in
       entry = "${terraformDocs}";
       files = "(\\.tf|README\\.md)$";
       pass_filenames = false;
+    };
+
+    git-hooks.hooks.terraform-validate.entry = lib.mkForce "${terraformValidate}";
+
+    scripts.terraform_validate = {
+      description = "Validate the Terraform configurations of the directories of the given files, configuring the provider aliases of modules for them";
+      exec = "${terraformValidate} \"$@\"";
     };
 
     scripts.terraform_docs = {

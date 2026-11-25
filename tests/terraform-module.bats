@@ -120,3 +120,52 @@ modules/sub/README.md:1"
   assert_output --partial "modules/sub/README.md: add the"
   assert [ ! -e modules/sub/README.md ]
 }
+
+@test "terraform_validate passes shellcheck" {
+  local script wrapper
+  script=$(sed -nE 's#.* (/nix/store/[^ ]+-script) .*#\1#p' "$(command -v terraform_validate)")
+  wrapper=$(grep -oE '/nix/store/[^ /]+-terraform-validate' "$script")
+  run shellcheck "$wrapper"
+  assert_success
+}
+
+# A module calling the null provider through an alias, as a module billing an API to another project calls the google provider
+aliased_module='terraform {
+  required_providers {
+    null = {
+      source                = "hashicorp/null"
+      configuration_aliases = [null.other]
+    }
+  }
+}
+
+resource "null_resource" "aliased" {
+  provider = null.other
+}'
+
+@test "terraform_validate configures the provider aliases of a module, and removes them afterwards" {
+  commit_files main.tf "$aliased_module"
+  run terraform_validate main.tf
+  assert_success
+  assert_output --partial "The configuration is valid."
+  assert [ ! -e zz_validate_provider_aliases.tf ]
+}
+
+@test "terraform_validate fails on an invalid module, and removes the provider aliases" {
+  commit_files main.tf "$aliased_module
+
+resource \"null_resource\" \"invalid\" {
+  unknown = true
+}"
+  run terraform_validate main.tf
+  assert_failure
+  assert_output --partial "Unsupported argument"
+  assert [ ! -e zz_validate_provider_aliases.tf ]
+}
+
+@test "terraform_validate validates a directory without provider aliases unchanged" {
+  commit_files modules/sub/main.tf 'resource "null_resource" "plain" {}'
+  run terraform_validate modules/sub/main.tf
+  assert_success
+  assert [ ! -e modules/sub/zz_validate_provider_aliases.tf ]
+}
