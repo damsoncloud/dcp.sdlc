@@ -88,6 +88,8 @@ It sets:
   OpenTofu, are not supported,
 * the `terraform-docs` git hook and `terraform_docs` script, generating the inputs and outputs of the module, and of its submodules in `modules/`, in their `README.md`
   between the `<!-- BEGIN_TF_DOCS -->` and `<!-- END_TF_DOCS -->` markers. The hook fails when a `README.md` or its markers are missing,
+* the `terraform-validate` git hook and `terraform_validate` script, validating every directory with Terraform files. A module calling providers through aliases,
+  declared with `configuration_aliases`, which only its callers configure, is validated with a temporary `zz_validate_provider_aliases.tf` configuring them empty,
 * `devenv test` running `terraform test` of the root module with the tests in `tests/`, after the git hooks, from any directory of the repository.
 
 The hook fails when the documentation is out of date, so `devenv test` in CI fails until the regenerated `README.md` is committed.
